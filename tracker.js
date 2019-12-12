@@ -5,7 +5,7 @@ var connection = mysql.createConnection({
     host: "localhost",
     port: 3306,
     user: "root",
-    password: "iloveanime7",
+    password: "",
     database: "trackerDB"
 });
 
@@ -88,9 +88,6 @@ function runOptions() {
 function allEmployees() {
     connection.query("SELECT * FROM employee, department, role", function (err, res) {
         if (err) throw err;
-        // for (let i = 0; i < res.length; i++) {
-        //     console.log(res[i].id + " | " + res[i].first_name + " | " + res[i].last_name + " | " + res[i].title + " | " + res[i].department_name + " | " + res[i].salary + " | " + res[i].manager_id);
-        // }
         console.table(res)
     });
 }
