@@ -86,31 +86,35 @@ function runOptions() {
 }
 
 function allEmployees() {
-    connection.query("SELECT * FROM employee, department, role", function (err, res) {
+    var query = `SELECT employee.id, employee.first_name, employee.last_name, role.title, role.salary, department.name AS Department, CONCAT(emp.first_name, " ", emp.last_name) AS Manager FROM employee `;
+    query += "LEFT JOIN role ON employee.role_id = role.id ";
+    query += "LEFT JOIN department ON role.department_id = department.id ";
+    query += "LEFT JOIN employee AS emp ON employee.manager_id = emp.id";
+    connection.query(query, function (err, res) {
         if (err) throw err;
         console.table(res)
     });
 }
 
 function allDepartments() {
-    connection.query("SELECT * FROM department", function (err, res) {
+    connection.query("SELECT department.name FROM department", function (err, res) {
         if (err) throw err;
-        for (let i = 0; i < res.length; i++) {
-            console.log(res[i].id + " | " + res[i].name)
-        }
+        console.table(res);
     });
 }
 
 function allRoles() {
-    connection.query("SELECT * FROM role", function (err, res) {
+    connection.query("SELECT role.title FROM role", function (err, res) {
         if (err) throw err;
-        for (let i = 0; i < res.length; i++) {
-            console.log(res[i].id + " | " + res[i].title)
-        }
+        console.table(res);
     });
 }
 
 function addEmployee() {
+    // var query = connection.query("SELECT role.title FROM role", {
+    // let queryArray = []
+    // queryArray.push(query);
+    // });
     inquirer
         .prompt([
             {
@@ -127,7 +131,7 @@ function addEmployee() {
                 name: "employeeRole",
                 type: "list",
                 message: "What is the employee's role?",
-                choices: "SELECT * FROM role GROUPBY title"
+                choices: queryArray
             },
             {
                 name: "employeeManager",
@@ -164,13 +168,27 @@ function addDepartment() {
 }
 
 function addRole() {
-    inquirer.prompt({
-        name: "roleName",
-        type: "input",
-        message: "What is your department's role?"
-    }).then(function (answer) {
-        var query = connection.query("INSERT INTO role SET ?", {
-            title: answer.roleName
+    inquirer.prompt([
+        {
+            name: "roleName",
+            type: "input",
+            message: "What is your department's role?"
+        },
+        {
+            name: "roleSalary",
+            type: "input",
+            message: "What is the role's salary?"
+        },
+        {
+            name: "roleDepartment",
+            type: "input",
+            message: "Which department is the role under?"
+        }
+    ]).then(function (answer) {
+        var query = "SELECT role.title, role.salary FROM role";
+        connection.query(query, {
+            title: answer.roleName,
+            salary: answer.roleSalary
         }, function (err, res) {
             if (err) throw err;
             console.log(res.affectedRows + " is added!\n")
@@ -192,14 +210,14 @@ function updateEmployeeRole() {
             message: "Which role do you want to change to?",
             choices: "SELECT * FROM role"
         }
-    ]).then(function(answer) {
-        var query = connection.query("UPDATE employee SET ? WHERE ?", 
-        {
-            role_id: answer.updatedRole
-        }, function(err, res) {
-            if(err) throw err;
-            console.log(res.affectedRows + " | is updated")
-        });
+    ]).then(function (answer) {
+        var query = connection.query("UPDATE employee SET ? WHERE ?",
+            {
+                role_id: answer.updatedRole
+            }, function (err, res) {
+                if (err) throw err;
+                console.log(res.affectedRows + " | is updated")
+            });
     });
 }
 
@@ -217,14 +235,14 @@ function updateEmployeeManager() {
             message: "Which manager do you want to change to?",
             choices: "SELECT * FROM employee"
         }
-    ]).then(function(answer) {
-        var query = connection.query("UPDATE employee SET ? WHERE ?", 
-        {
-            manager_id: answer.updatedManager
-        }, function(err, res) {
-            if(err) throw err;
-            console.log(res.affectedRows + " | is updated")
-        });
+    ]).then(function (answer) {
+        var query = connection.query("UPDATE employee SET ? WHERE ?",
+            {
+                manager_id: answer.updatedManager
+            }, function (err, res) {
+                if (err) throw err;
+                console.log(res.affectedRows + " | is updated")
+            });
     });
 }
 
@@ -234,9 +252,9 @@ function employeesByDepartment() {
         type: "list",
         message: "Which department do you want to view?",
         choices: "SELECT * FROM department"
-    }).then(function(answer) {
+    }).then(function (answer) {
         var query = "SELECT name FROM department WHERE ?";
-        connection.query(query, { name: answer.departmentList }, function(err, res) {
+        connection.query(query, { name: answer.departmentList }, function (err, res) {
 
         })
     })
